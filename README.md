@@ -6,6 +6,15 @@ A personal tax planning companion for Malaysian sole proprietors who file Borang
 
 Planning stage. Planned workflows include tracking income and expenses, recording personal reliefs and historical returns, estimating tax and reserves, and testing what-if scenarios.
 
+## M0A documentation
+
+- [Requirements](docs/REQUIREMENTS.md), [Architecture](docs/ARCHITECTURE.md) and [Data model](docs/DATA_MODEL.md)
+- [Tax rules and validation](docs/TAX_RULES.md) and [Import specification](docs/IMPORT_SPEC.md)
+- [Decisions](docs/DECISIONS.md), [Roadmap](docs/ROADMAP.md) and [Security](docs/SECURITY.md)
+- [Contributor instructions](AGENTS.md)
+
+M0A prepares the repository for implementation. Accounting, FX, fixed-deposit and Malaysian tax treatments are pending validation.
+
 ## Contributing and generative AI
 
 - **AI-assisted contributions are welcome.** You are responsible for every change you submit. Review the entire diff by hand, verify generated code and dependencies, and make sure you can explain the change. Mention material AI assistance in the pull request.

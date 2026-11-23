@@ -1,0 +1,10 @@
+# Local credentials and private financial material
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+*.pem
+*.key
+/backups/
+/private-data/
