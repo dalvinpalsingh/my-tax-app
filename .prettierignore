@@ -1,0 +1,6 @@
+.cloudflare/
+dist/
+pnpm-lock.yaml
+docs/
+README.md
+AGENTS.md

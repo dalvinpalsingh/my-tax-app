@@ -1,0 +1,13 @@
+# Import and reconciliation specification
+
+Support manual entry and CSV/XLSX for bank statements, commission statements and historical records. Export historical Google Sheets to a supported format. Keep PDFs as linked evidence in v1. Use synthetic files when defining or testing mappings.
+
+1. Select a record type, account or activity, currency and statement period. Select the worksheet, header row and mapping. Map dates, amounts or debit/credit columns, currency, reference and optional description, balance or classification. Commission mappings also support period, gross/net, adjustments and line identifiers. Save reusable mapping versions.
+2. Parse an inert, bounded upload. Reject unsupported or oversized files and unsafe workbook content. Never execute macros, formulas or external links. Use explicit date and number formats and normalize signs consistently. Reject ambiguous dates, invalid precision and missing required values. Report row errors without logging source contents.
+3. Preview normalized rows, errors, duplicate candidates, possible manual matches and control totals. Compare opening/closing balances or gross/net totals when present. Use stable source identifiers where available, scoped to account/source, and a normalized fingerprint for candidate detection. Equal amounts and dates may represent distinct legitimate transactions.
+4. On confirmation, commit the selected valid rows with batch and row provenance. Make retries and concurrent submissions idempotent for confirmed source identities. Preserve one outcome per row. An interrupted submission must either roll back or resume safely without duplicate postings.
+5. Reconcile to existing transactions, transfers, invoices and commission settlements. Allow partial or grouped matches, explicit unmatched status and documented approvals. Mark reconciled only when the match balances or a documented discrepancy is accepted. Reverse confirmed errors through linked corrections where entries are reconciled or locked.
+
+Track batch totals by outcome and currency, including skipped, matched, committed and rejected rows. Audit mapping changes, commit, match, override and reversal actions. Keep raw files and row contents private according to [Security](SECURITY.md). Treat exported spreadsheet cells as inert text when they could be interpreted as formulas.
+
+Acceptance cases include duplicate file retries, overlapping statements, equal legitimate rows, manual-before-import matching, CSV and workbook format variations, partial invoice settlement, a commission clawback and a net amount that differs from the bank credit.
