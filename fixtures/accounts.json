@@ -1,0 +1,25 @@
+[
+  {
+    "sql": "INSERT INTO accounts (id, name, currency, kind, opening_balance_minor, opening_balance_date) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING",
+    "params": [
+      "sample-operating",
+      "Business operating",
+      "MYR",
+      "business",
+      "1245000",
+      "2026-01-01",
+      "sample-usd",
+      "USD receipts",
+      "USD",
+      "business",
+      "325000",
+      "2026-01-01",
+      "sample-reserve",
+      "Tax reserve",
+      "MYR",
+      "personal",
+      "480000",
+      "2026-01-01"
+    ]
+  }
+]

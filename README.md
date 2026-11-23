@@ -4,7 +4,26 @@ A personal tax planning companion for Malaysian sole proprietors who file Borang
 
 ## Project status
 
-Planning stage. Planned workflows include tracking income and expenses, recording personal reliefs and historical returns, estimating tax and reserves, and testing what-if scenarios.
+The M0B foundation displays read-only opening balances in MYR and USD. Planned workflows include tracking income and expenses, recording personal reliefs and historical returns, estimating tax and reserves, and testing what-if scenarios.
+
+## Run locally
+
+With Node.js 24 and pnpm 11 installed, run these commands from the repository root.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
+Open the local URL printed by the server. The local D1 fixture contains three synthetic accounts. The local Worker uses Cloudflare's simulated Access identity, and the hosted Worker verifies an Access application JWT. Reloading the fixture preserves existing rows with the same IDs.
+
+Run `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm format:check` before review. Build first to generate the Worker types. Use `pnpm exec cf build --mode test` to check the TEST build.
+
+### Hosted setup
+
+TEST and PROD select distinct Worker and D1 names. Provision each environment separately, apply only versioned migrations, and configure an Access policy restricted to the approved Google and email PIN identities. Set `ACCESS_ISSUER`, `ACCESS_AUDIENCE` and `ACCESS_EMAIL` through the Worker secret store. Keep alternate Workers routes and preview URLs disabled. Attach the intended domain only when its Access policy is ready. Verify both login methods and anonymous rejection in TEST. Production deployment requires explicit authorization.
 
 ## M0A documentation
 
