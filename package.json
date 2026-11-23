@@ -1,0 +1,44 @@
+{
+  "name": "my-tax-app",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "cf dev",
+    "build": "cf build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "format:check": "prettier --check .",
+    "db:migrate": "cf d1 migrations apply 00000000-0000-4000-8000-000000000001 --local",
+    "db:seed": "cf d1 raw 00000000-0000-4000-8000-000000000001 --local --batch @fixtures/accounts.json"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "jose": "^6",
+    "lucide-react": "^0.577.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-router": "^7",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-rc.3",
+    "@tailwindcss/vite": "^4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5",
+    "cf": "1.0.0-rc.2",
+    "eslint": "^9",
+    "prettier": "^3",
+    "tailwindcss": "^4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8",
+    "vite": "^7",
+    "vitest": "^4"
+  }
+}
