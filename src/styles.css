@@ -135,3 +135,55 @@ h2 {
   border-radius: 8px;
   margin-bottom: 16px;
 }
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.primary-button {
+  background: #153b33;
+  border-color: #153b33;
+  color: #fff;
+}
+.account-form {
+  margin-bottom: 24px;
+  padding: 22px;
+  border: 1px solid #dce3db;
+  border-radius: 14px;
+  background: #fff;
+}
+.account-form h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+.form-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.form-fields label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+}
+.form-fields input,
+.form-fields select {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #a6b6ad;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-weight: 400;
+  background: #fff;
+}
+.form-fields :focus-visible {
+  outline: 3px solid #58a88e;
+  outline-offset: 2px;
+}
+.save-status {
+  margin-bottom: 16px;
+}

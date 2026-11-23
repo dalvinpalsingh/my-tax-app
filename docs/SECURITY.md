@@ -16,4 +16,4 @@ Keep independent encrypted backups of database records, metadata and actual atta
 
 ## Deployments and incidents
 
-Use reviewed PRs, automated checks, separate TEST and PROD data and credentials, and explicit approval before production deployments. Use synthetic data in TEST. Check target environment and migration readiness before release and document recovery procedures. Report vulnerabilities privately to the maintainer as described in the README. For an exposure, revoke or rotate affected credentials, contain the access path, assess affected records, and coordinate cleanup and recovery privately.
+Use reviewed PRs for promotion to TEST and PROD, automated checks, separate TEST and PROD data and credentials, and explicit approval before production deployments. Use synthetic data in TEST. Check target environment and migration readiness before release and document recovery procedures. Report vulnerabilities privately to the maintainer as described in the README. For an exposure, revoke or rotate affected credentials, contain the access path, assess affected records, and coordinate cleanup and recovery privately.

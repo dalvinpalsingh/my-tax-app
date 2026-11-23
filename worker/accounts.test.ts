@@ -4,6 +4,21 @@ import worker from "./index";
 import { handleApi } from "./accounts";
 
 const url = "https://app.example.invalid/api/accounts";
+const sample = {
+  name: "Sample operating",
+  kind: "business",
+  currency: "USD",
+  openingBalance: "-12.34",
+  openingBalanceDate: "2026-01-01",
+};
+
+function createRequest(body: unknown) {
+  return new Request(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
 
 describe("Accounts API", () => {
   it("ignores spoofed identity headers on the hosted Worker", async () => {
@@ -27,14 +42,83 @@ describe("Accounts API", () => {
     const prepare = vi.fn();
     const db = { prepare } as unknown as D1Database;
     const response = await handleApi(
-      new Request(url, { method: "POST" }),
+      new Request(url, { method: "DELETE" }),
       db,
       true,
     );
     expect(response.status).toBe(405);
-    expect(response.headers.get("Allow")).toBe("GET");
+    expect(response.headers.get("Allow")).toBe("GET, POST");
     expect(prepare).not.toHaveBeenCalled();
   });
+
+  it("rejects an unauthorized account submission before accessing D1", async () => {
+    const prepare = vi.fn();
+    const db = { prepare } as unknown as D1Database;
+    const response = await handleApi(createRequest(sample), db, false);
+    expect(response.status).toBe(403);
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  it.each(["12.345", "1e2", "12,30", "NaN", "90071992547409.92"])(
+    "rejects invalid or out-of-range balance %s",
+    async (openingBalance) => {
+      const prepare = vi.fn();
+      const db = { prepare } as unknown as D1Database;
+      const response = await handleApi(
+        createRequest({ ...sample, openingBalance }),
+        db,
+        true,
+      );
+      expect(response.status).toBe(400);
+      expect(prepare).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects impossible dates", async () => {
+    const prepare = vi.fn();
+    const db = { prepare } as unknown as D1Database;
+    const response = await handleApi(
+      createRequest({ ...sample, openingBalanceDate: "2026-02-29" }),
+      db,
+      true,
+    );
+    expect(response.status).toBe(400);
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["USD", "-12.34", -1234],
+    ["MYR", "0.01", 1],
+    ["MYR", "90071992547409.91", Number.MAX_SAFE_INTEGER],
+  ])(
+    "saves %s %s as exact minor units",
+    async (currency, openingBalance, minor) => {
+      const run = vi.fn();
+      const bind = vi.fn(() => ({ run }));
+      const db = { prepare: vi.fn(() => ({ bind })) } as unknown as D1Database;
+      const response = await handleApi(
+        createRequest({ ...sample, currency, openingBalance }),
+        db,
+        true,
+      );
+      expect(response.status).toBe(201);
+      const account = await response.json();
+      expect(account).toMatchObject({
+        name: sample.name,
+        currency,
+        openingBalanceMinor: minor,
+      });
+      expect(bind).toHaveBeenCalledWith(
+        (account as { id: string }).id,
+        sample.name,
+        currency,
+        sample.kind,
+        minor,
+        sample.openingBalanceDate,
+      );
+      expect(run).toHaveBeenCalledOnce();
+    },
+  );
 
   it("accepts an approved Access application token and rejects a different audience", async () => {
     const issuer = "https://team.example.invalid";

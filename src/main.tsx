@@ -2,12 +2,15 @@ import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
-import { Landmark, RefreshCw, Wallet } from "lucide-react";
+import { Landmark, Plus, RefreshCw, Wallet } from "lucide-react";
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, NavLink, Route, Routes } from "react-router";
 import { accountsResponse } from "./accounts";
 import type { Account } from "./accounts";
+import { AccountForm } from "./account-form";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -37,6 +40,9 @@ function formatOpeningBalance(account: Account) {
 }
 
 function Accounts() {
+  const client = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [saved, setSaved] = useState("");
   const query = useQuery({
     queryKey: ["accounts"],
     queryFn: ({ signal }) => fetchAccounts(signal),
@@ -53,14 +59,43 @@ function Accounts() {
           <h1>Accounts</h1>
           <p>Opening balances by account and currency.</p>
         </div>
-        <button
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          <RefreshCw aria-hidden="true" size={16} />
-          {query.isFetching ? "Refreshing…" : "Refresh"}
-        </button>
+        <div className="page-actions">
+          <button
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            <RefreshCw aria-hidden="true" size={16} />
+            {query.isFetching ? "Refreshing…" : "Refresh"}
+          </button>
+          {!adding && (
+            <button
+              className="primary-button"
+              onClick={() => {
+                setSaved("");
+                setAdding(true);
+              }}
+            >
+              <Plus aria-hidden="true" size={16} />
+              Add account
+            </button>
+          )}
+        </div>
       </div>
+      {adding && (
+        <AccountForm
+          onCancel={() => setAdding(false)}
+          onSaved={(account) => {
+            setAdding(false);
+            setSaved(`${account.name} added.`);
+            void client.invalidateQueries({ queryKey: ["accounts"] });
+          }}
+        />
+      )}
+      {saved && (
+        <p className="save-status" role="status">
+          {saved}
+        </p>
+      )}
       {query.isPending && <p role="status">Loading accounts…</p>}
       {query.isError && <p role="alert">{query.error.message}</p>}
       {query.data?.length === 0 && <p>No accounts have been recorded yet.</p>}
