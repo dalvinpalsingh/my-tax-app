@@ -2,11 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus } from "lucide-react";
 import { useLayoutEffect, useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
+import { activitiesQueryKey } from "./activity-api";
 import {
-  businessesResponse,
-  businessSchema,
-  createBusinessSchema,
-} from "./businesses";
+  businessesQueryKey as queryKey,
+  businessesQueryOptions,
+} from "./business-api";
+import { businessSchema, createBusinessSchema } from "./businesses";
 import type {
   Business,
   BusinessDetails,
@@ -16,6 +17,7 @@ import type {
 import { dateFormat } from "./display";
 import { PageHeader } from "./page-header";
 import { ArchiveConfirmation, RecordAction } from "./record-action";
+import { filterRecordsByStatus } from "./record-list";
 import { RecordLoadingStatus, RecordRefreshButton } from "./record-results";
 import {
   RecordStatusNav,
@@ -28,23 +30,11 @@ import {
   registrationReferenceMaxLength,
 } from "./validation-limits";
 
-const queryKey = ["businesses"];
 const emptyMessage = {
   all: "No businesses have been recorded yet.",
   active: "No active businesses.",
   archived: "No archived businesses.",
 } satisfies Record<RecordStatus, string>;
-
-async function fetchBusinesses(status: RecordStatus, signal: AbortSignal) {
-  const response = await fetch(`/api/businesses?status=${status}`, {
-    signal,
-    cache: "no-store",
-  });
-  if (response.status === 403)
-    throw new Error("Sign in with your approved account to continue.");
-  if (!response.ok) throw new Error("Businesses are temporarily unavailable.");
-  return businessesResponse.parse(await response.json()).businesses;
-}
 
 async function writeBusiness(
   url: string,
@@ -94,7 +84,12 @@ function BusinessForm({
             ...input,
             registrationReference: input.registrationReference ?? undefined,
           }),
-    onSuccess: () => void client.invalidateQueries({ queryKey }),
+    onSuccess: (savedBusiness) => {
+      void client.invalidateQueries({ queryKey });
+      if (business && business.name !== savedBusiness.name) {
+        void client.invalidateQueries({ queryKey: activitiesQueryKey });
+      }
+    },
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -178,16 +173,18 @@ function BusinessesView({ status }: { status: RecordStatus }) {
   const [editor, setEditor] = useState<Business | "new" | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
-  const query = useQuery({
-    queryKey: [...queryKey, status],
-    queryFn: ({ signal }) => fetchBusinesses(status, signal),
-  });
+  const query = useQuery(businessesQueryOptions);
+  const visibleBusinesses = filterRecordsByStatus(query.data, status);
   const { mutate, reset, isPending, error } = useMutation({
     mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
       writeBusiness(`/api/businesses/${encodeURIComponent(id)}`, "PATCH", {
         archived,
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey }),
+        client.invalidateQueries({ queryKey: activitiesQueryKey }),
+      ]),
   });
 
   useLayoutEffect(() => {
@@ -273,13 +270,13 @@ function BusinessesView({ status }: { status: RecordStatus }) {
         )}
         {query.isError && <p role="alert">{query.error.message}</p>}
         {error && <p role="alert">{error.message}</p>}
-        {query.data?.length === 0 && <p>{emptyMessage[status]}</p>}
-        {!!query.data?.length && (
+        {visibleBusinesses?.length === 0 && <p>{emptyMessage[status]}</p>}
+        {!!visibleBusinesses?.length && (
           <ul
             className="record-grid"
             aria-label={`${statusLabels[status]} businesses`}
           >
-            {query.data.map((business) => (
+            {visibleBusinesses.map((business) => (
               <li key={business.id}>
                 <div className="account-heading">
                   <div className="account-icon">
@@ -298,7 +295,7 @@ function BusinessesView({ status }: { status: RecordStatus }) {
                     {dateFormat.format(new Date(business.startDate))}
                   </time>
                 </p>
-                <div className="business-card-reference date wrap-anywhere">
+                <div className="record-card-detail date wrap-anywhere">
                   {business.registrationReference && (
                     <>
                       Registration reference: {business.registrationReference}

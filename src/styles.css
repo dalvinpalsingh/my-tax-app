@@ -175,7 +175,7 @@ a:focus-visible {
   border-radius: 14px;
   background: #fff;
 }
-.record-grid > li > :is(h2, .balance, .business-card-reference) {
+.record-grid > li > :is(h2, .balance, .record-card-detail) {
   min-block-size: 2lh;
 }
 [data-reserve-space="true"] {

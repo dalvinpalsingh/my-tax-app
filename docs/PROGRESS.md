@@ -20,14 +20,18 @@ Update this checklist after each task and summarize the current status in the ha
 
 - [x] Standardize page titles and descriptions outside Home. Verified matching layouts in Chrome at desktop, tablet and mobile widths and confirmed the shared header works with optional controls.
 
+- [x] Use one cached All list with in-memory status filters on Accounts, Businesses and Activities. The Business picker shares the Businesses cache. Verified request counts, linked status updates and failed writes in Chrome with synthetic responses. Checked direct links and reloads against the local app.
+- [x] Share the 192 px icon between the browser tab and app manifest with a one-year browser cache. Change the shared URL when replacing the image so browsers fetch the new version.
+- [x] Add the Activities page with optional Business links and create, edit, archive and restore actions. Verified the local D1 migration, API behavior and the Chrome workflow with synthetic data.
+
 ## Ongoing
 
 No tasks in progress.
 
 ## Pending
 
-- [ ] Business activities and transaction assignment.
-- [ ] Manual income and expense entry, splits, transfers and drawings.
+- [ ] Manual income and expense entry with activity assignment by stable activity ID, followed by splits, transfers and drawings.
+- [ ] Add dated Business links before transaction reporting depends on activity-to-business history.
 - [ ] Calculate monthly account opening balances, net movements and closing balances after manual transactions and transfers and before statement reconciliation.
 - [ ] CSV/XLSX imports and reconciliation.
 - [ ] Hosted TEST and live Access verification, then explicitly approved PROD setup.

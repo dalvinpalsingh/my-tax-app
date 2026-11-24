@@ -10,3 +10,4 @@
 - Keep changes focused and record the checks you ran. Update [Progress](docs/PROGRESS.md) after each task and include a short status checklist in the handoff. [Roadmap](docs/ROADMAP.md) defines milestone boundaries.
 - In each handoff, list the added, modified, renamed and deleted files for review alongside the Completed, Ongoing and Pending summary.
 - Leave changes uncommitted for the user to verify. Commit and push to `dev` only after the user approves the changes.
+- After a commit, name the next pending task and wait for the user to reply before planning or implementing it.

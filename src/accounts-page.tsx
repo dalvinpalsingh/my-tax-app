@@ -12,6 +12,7 @@ import {
 import { dateFormat, displayLocale } from "./display";
 import { PageHeader } from "./page-header";
 import { ArchiveConfirmation, RecordAction } from "./record-action";
+import { filterRecordsByStatus, recordListCacheOptions } from "./record-list";
 import { RecordLoadingStatus, RecordRefreshButton } from "./record-results";
 import {
   RecordStatusNav,
@@ -49,9 +50,11 @@ function AccountsView({ status }: { status: RecordStatus }) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
   const query = useQuery({
-    queryKey: [...accountsQueryKey, status],
-    queryFn: ({ signal }) => fetchAccounts(status, signal),
+    queryKey: accountsQueryKey,
+    queryFn: ({ signal }) => fetchAccounts(signal),
+    ...recordListCacheOptions,
   });
+  const visibleAccounts = filterRecordsByStatus(query.data, status);
   const { mutate, reset, isPending, error } = useMutation({
     mutationFn: ({ id, archive }: { id: string; archive: boolean }) =>
       updateAccount(id, { archived: archive }),
@@ -141,13 +144,13 @@ function AccountsView({ status }: { status: RecordStatus }) {
         )}
         {query.isError && <p role="alert">{query.error.message}</p>}
         {error && <p role="alert">{error.message}</p>}
-        {query.data?.length === 0 && <p>{emptyMessage[status]}</p>}
-        {!!query.data?.length && (
+        {visibleAccounts?.length === 0 && <p>{emptyMessage[status]}</p>}
+        {!!visibleAccounts?.length && (
           <ul
             className="record-grid"
             aria-label={`${statusLabels[status]} accounts`}
           >
-            {query.data.map((account) => (
+            {visibleAccounts.map((account) => (
               <li key={account.id}>
                 <div className="account-heading">
                   <div className="account-icon">

@@ -1,5 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ArrowRight, Building2, House, Landmark, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  House,
+  Landmark,
+  ListChecks,
+  Wallet,
+} from "lucide-react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -10,6 +17,7 @@ import {
   Routes,
 } from "react-router";
 import { Accounts } from "./accounts-page";
+import { Activities } from "./activities-page";
 import { Businesses } from "./businesses-page";
 import "./styles.css";
 
@@ -30,6 +38,12 @@ const sections = [
     icon: Building2,
     description:
       "Keep your business names, start dates and registration references together.",
+  },
+  {
+    to: "/activities",
+    label: "Activities",
+    icon: ListChecks,
+    description: "Track activities and their links to businesses.",
   },
 ];
 
@@ -83,6 +97,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/businesses" element={<Businesses />} />
+        <Route path="/activities" element={<Activities />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

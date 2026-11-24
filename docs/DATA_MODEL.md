@@ -16,3 +16,5 @@ This is a logical model for incremental migrations. Preserve stable record IDs, 
 | Planning and audit | Track budget categories, goals, reserve allocations, scenarios, reminders, audit events and correction chains separately from posted financial movements. |
 
 Use integer minor units for money, precise decimal strings for exchange rates, and ISO dates with Malaysia's calendar applied to business and tax dates. Make rounding and valuation policy explicit when validated. Preserve both original amounts and derived values. Record the actor, timestamp, reason and affected record for imports, edits, overrides, reversals and recalculations. Use linked corrections for reconciled or locked entries.
+
+M1 activities have a stable ID, name, start date, optional current Business link and archive timestamp. Archiving a business preserves existing links, and activity archiving works independently. The first manual transaction form will assign activities by stable ID. Record dated Business link changes before using those links to derive historical transaction reporting.

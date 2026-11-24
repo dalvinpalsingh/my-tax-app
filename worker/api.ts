@@ -1,4 +1,5 @@
 import { createAccount, listAccounts, updateAccount } from "./accounts";
+import { createActivity, listActivities, updateActivity } from "./activities";
 import { createBusiness, listBusinesses, updateBusiness } from "./businesses";
 import { recordStatusSchema } from "../src/record-status";
 import { maxRecordBodyBytes } from "../src/validation-limits";
@@ -18,12 +19,14 @@ export async function handleApi(
 
   if (!authorized) return json({ error: "Access required" }, 403);
   const url = new URL(request.url);
-  const route = /^\/api\/(accounts|businesses)(?:\/([a-zA-Z0-9_-]+))?$/.exec(
-    url.pathname,
-  );
+  const route =
+    /^\/api\/(accounts|activities|businesses)(?:\/([a-zA-Z0-9_-]+))?$/.exec(
+      url.pathname,
+    );
   if (!route) return json({ error: "Not found" }, 404);
   const [, resource, id] = route;
   const isBusiness = resource === "businesses";
+  const isActivity = resource === "activities";
   const method = request.method;
   const allowed = id ? ["PATCH"] : ["GET", "POST"];
   if (!allowed.includes(method))
@@ -31,7 +34,7 @@ export async function handleApi(
       Allow: allowed.join(", "),
     });
 
-  const noun = isBusiness ? "business" : "account";
+  const noun = isActivity ? "activity" : isBusiness ? "business" : "account";
   if (method !== "GET") {
     const origin = request.headers.get("Origin");
     if (origin && origin !== url.origin)
@@ -59,9 +62,7 @@ export async function handleApi(
           await reader.cancel();
           return json(
             {
-              error: isBusiness
-                ? "Business details are too large."
-                : "Account details are too large.",
+              error: `${noun[0].toUpperCase()}${noun.slice(1)} details are too large.`,
             },
             413,
           );
@@ -74,6 +75,14 @@ export async function handleApi(
     }
 
     try {
+      if (isActivity) {
+        const result = id
+          ? await updateActivity(db, id, body)
+          : await createActivity(db, body);
+        return "activity" in result
+          ? json(result.activity, result.status)
+          : json({ error: result.error }, result.status);
+      }
       if (id && isBusiness) {
         const result = await updateBusiness(db, id, body);
         return json(result.business ?? { error: result.error }, result.status);
@@ -96,18 +105,21 @@ export async function handleApi(
     }
   }
   const status = recordStatusSchema.safeParse(
-    url.searchParams.get("status") ?? (isBusiness ? "all" : "active"),
+    url.searchParams.get("status") ??
+      (resource === "accounts" ? "active" : "all"),
   );
   if (!status.success) return json({ error: "Invalid status filter." }, 400);
   try {
-    const list = isBusiness ? listBusinesses : listAccounts;
+    const list = isActivity
+      ? listActivities
+      : isBusiness
+        ? listBusinesses
+        : listAccounts;
     return json(await list(db, status.data));
   } catch {
     return json(
       {
-        error: isBusiness
-          ? "Businesses are temporarily unavailable"
-          : "Accounts are temporarily unavailable",
+        error: `${resource[0].toUpperCase()}${resource.slice(1)} are temporarily unavailable`,
       },
       503,
     );
