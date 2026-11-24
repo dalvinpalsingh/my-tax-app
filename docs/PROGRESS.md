@@ -18,6 +18,8 @@ Update this checklist after each task and summarize the current status in the ha
   - Verified editing, clearing a registration reference, reload persistence, cancel, and archive and restore in Chrome using a synthetic business. Added API checks for partial updates, validation, authorization, and editing an archived business.
   - Stabilized Refresh, card sizing, and page alignment across filters. Verified slow and cached loads, errors, keyboard focus, URL reloads, and desktop and mobile sizing with zero, one, and several results in Chrome. Exercised create, edit, archive and restore with synthetic responses.
 
+- [x] Standardize page titles and descriptions outside Home. Verified matching layouts in Chrome at desktop, tablet and mobile widths and confirmed the shared header works with optional controls.
+
 ## Ongoing
 
 No tasks in progress.

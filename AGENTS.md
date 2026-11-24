@@ -5,6 +5,8 @@
 - Use synthetic fixtures. Keep credentials, real financial records, and private identifiers out of Git, logs, tests, issues, pull requests, and AI prompts. See [Security](docs/SECURITY.md).
 - Preserve source events, audit history and filed returns. Keep accounting, FX, fixed-deposit and Malaysian tax treatments pending until validated under [Tax rules](docs/TAX_RULES.md).
 - When adding screens that manage records, cover create, view, edit and removal. Use archive and restore when records need to be retained. Record any deferred actions in [Progress](docs/PROGRESS.md).
+- Use the shared `PageHeader` from `src/page-header.tsx` on every page outside Home. Pass a title and short description, and supply `actions` when the page has controls in its header.
 - For browser checks, reuse an existing local app tab when available. Open one only if needed and leave the app tab open for the user's review.
 - Keep changes focused and record the checks you ran. Update [Progress](docs/PROGRESS.md) after each task and include a short status checklist in the handoff. [Roadmap](docs/ROADMAP.md) defines milestone boundaries.
+- In each handoff, list the added, modified, renamed and deleted files for review alongside the Completed, Ongoing and Pending summary.
 - Leave changes uncommitted for the user to verify. Commit and push to `dev` only after the user approves the changes.

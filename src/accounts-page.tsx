@@ -10,6 +10,7 @@ import {
   type Account,
 } from "./accounts";
 import { dateFormat, displayLocale } from "./display";
+import { PageHeader } from "./page-header";
 import { ArchiveConfirmation, RecordAction } from "./record-action";
 import { RecordLoadingStatus, RecordRefreshButton } from "./record-results";
 import {
@@ -90,25 +91,25 @@ function AccountsView({ status }: { status: RecordStatus }) {
 
   return (
     <main>
-      <div className="page-title">
-        <div>
-          <h1>Accounts</h1>
-          <p>Opening balances by account and currency.</p>
-        </div>
-        <div className="page-actions">
-          <RecordRefreshButton
-            onRefresh={() => void query.refetch({ cancelRefetch: false })}
-          />
-          <button
-            className="primary-button"
-            data-reserve-space={status === "archived" || !!editor}
-            disabled={isPending}
-            onClick={() => openEditor("new")}
-          >
-            <Plus aria-hidden="true" size={16} /> Add account
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Accounts"
+        description="Opening balances by account and currency."
+        actions={
+          <>
+            <RecordRefreshButton
+              onRefresh={() => void query.refetch({ cancelRefetch: false })}
+            />
+            <button
+              className="primary-button record-add-button"
+              data-reserve-space={status === "archived" || !!editor}
+              disabled={isPending}
+              onClick={() => openEditor("new")}
+            >
+              <Plus aria-hidden="true" size={16} /> Add account
+            </button>
+          </>
+        }
+      />
       <RecordStatusNav
         path="/accounts"
         status={status}
