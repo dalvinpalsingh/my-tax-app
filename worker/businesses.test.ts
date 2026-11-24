@@ -16,6 +16,14 @@ function createRequest(body: unknown, origin?: string) {
   });
 }
 
+function patchRequest(body: unknown, id = "sample") {
+  return new Request(`${url}/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 describe("Businesses API", () => {
   it.each([undefined, " SAMPLE-001 "])(
     "creates a business with reference %s",
@@ -50,13 +58,144 @@ describe("Businesses API", () => {
   );
 
   it("lists stored businesses", async () => {
-    const business = { id: "sample", ...sample, registrationReference: null };
+    const business = {
+      id: "sample",
+      ...sample,
+      registrationReference: null,
+      archivedAt: null,
+    };
+    const bind = vi.fn(() => ({ all: async () => ({ results: [business] }) }));
     const db = {
-      prepare: () => ({ all: async () => ({ results: [business] }) }),
+      prepare: () => ({ bind }),
     } as unknown as D1Database;
     const response = await handleApi(new Request(url), db, true);
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ businesses: [business] });
+    expect(bind).toHaveBeenCalledWith(null, null);
+  });
+
+  it.each([
+    ["all", null],
+    ["active", 0],
+    ["archived", 1],
+  ] as const)(
+    "passes the %s filter to the business query",
+    async (status, parameter) => {
+      const bind = vi.fn(() => ({ all: async () => ({ results: [] }) }));
+      const db = { prepare: () => ({ bind }) } as unknown as D1Database;
+      const response = await handleApi(
+        new Request(`${url}?status=${status}`),
+        db,
+        true,
+      );
+      expect(response.status).toBe(200);
+      expect(bind).toHaveBeenCalledWith(parameter, parameter);
+    },
+  );
+
+  it.each(["/accounts", "/businesses"])(
+    "rejects invalid explicit filters for %s",
+    async (path) => {
+      const prepare = vi.fn();
+      const db = { prepare } as unknown as D1Database;
+      const response = await handleApi(
+        new Request(`https://app.example.invalid/api${path}?status=missing`),
+        db,
+        true,
+      );
+      expect(response.status).toBe(400);
+      expect(prepare).not.toHaveBeenCalled();
+    },
+  );
+
+  it("validates business archive requests and rejects unauthorized changes", async () => {
+    const prepare = vi.fn();
+    const db = { prepare } as unknown as D1Database;
+    expect(
+      (await handleApi(patchRequest({ archived: true }), db, false)).status,
+    ).toBe(403);
+    expect(
+      (
+        await handleApi(
+          patchRequest({ archived: true, name: "Other" }),
+          db,
+          true,
+        )
+      ).status,
+    ).toBe(400);
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [undefined, 0, null, "PREVIOUS-REF"],
+    [null, 1, null, null],
+    [" NEW-REF ", 1, "NEW-REF", "NEW-REF"],
+  ] as const)(
+    "edits a business with reference %s",
+    async (reference, provided, parameter, stored) => {
+      const updated = {
+        id: "sample",
+        name: "Updated sample",
+        startDate: "2025-04-01",
+        registrationReference: stored,
+        archivedAt: null,
+      };
+      const bind = vi.fn(() => ({ first: async () => updated }));
+      const db = { prepare: () => ({ bind }) } as unknown as D1Database;
+      const response = await handleApi(
+        patchRequest({
+          name: " Updated sample ",
+          startDate: updated.startDate,
+          registrationReference: reference,
+        }),
+        db,
+        true,
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(updated);
+      expect(bind).toHaveBeenCalledWith(
+        updated.name,
+        updated.startDate,
+        provided,
+        parameter,
+        updated.id,
+      );
+    },
+  );
+
+  it.each([
+    [{ id: "sample" }, 409],
+    [null, 404],
+  ] as const)(
+    "rejects an edit when the active record is unavailable",
+    async (record, status) => {
+      const prepare = vi
+        .fn()
+        .mockReturnValueOnce({ bind: () => ({ first: async () => null }) })
+        .mockReturnValueOnce({ bind: () => ({ first: async () => record }) });
+      const db = { prepare } as unknown as D1Database;
+      const response = await handleApi(
+        patchRequest({ name: "Edited" }),
+        db,
+        true,
+      );
+      expect(response.status).toBe(status);
+      expect(prepare.mock.calls[0][0]).toContain("archived_at IS NULL");
+    },
+  );
+
+  it("rejects invalid and unauthorized business edits before writing", async () => {
+    const prepare = vi.fn();
+    const db = { prepare } as unknown as D1Database;
+    expect(
+      (await handleApi(patchRequest({ name: "Edited" }), db, false)).status,
+    ).toBe(403);
+    for (const invalid of [{}, { name: " " }, { startDate: "2025-02-29" }]) {
+      expect((await handleApi(patchRequest(invalid), db, true)).status).toBe(
+        400,
+      );
+    }
+    expect(prepare).not.toHaveBeenCalled();
   });
 
   it.each([

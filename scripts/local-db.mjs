@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { localDatabaseId } from "./local-simulator.ts";
 import { localStateRoot } from "./local-state.ts";
 
 const commands = {
@@ -20,7 +21,7 @@ const result = spawnSync(
     cf,
     "d1",
     ...commands[action],
-    "00000000-0000-4000-8000-000000000001",
+    localDatabaseId,
     "--local",
     "--persist-to",
     localStateRoot(),

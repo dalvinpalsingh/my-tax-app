@@ -1,8 +1,20 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { createAccountSchema, openingBalanceText } from "./accounts";
+import {
+  accountCurrencies,
+  accountKindLabels,
+  accountKinds,
+  createAccountSchema,
+  defaultAccountCurrency,
+  defaultAccountKind,
+  openingBalanceText,
+} from "./accounts";
 import type { Account, CreateAccountInput } from "./accounts";
-import { createAccount, updateAccount } from "./account-api";
+import { accountsQueryKey, createAccount, updateAccount } from "./account-api";
+import {
+  openingBalanceMaxLength,
+  recordNameMaxLength,
+} from "./validation-limits";
 
 export function AccountForm({
   account,
@@ -13,11 +25,13 @@ export function AccountForm({
   onSaved: (account: Account) => void;
   onCancel: () => void;
 }) {
+  const client = useQueryClient();
   const [validation, setValidation] = useState("");
   const save = useMutation({
     mutationFn: (input: CreateAccountInput) =>
       account ? updateAccount(account.id, input) : createAccount(input),
-    onSuccess: onSaved,
+    onSuccess: () =>
+      void client.invalidateQueries({ queryKey: accountsQueryKey }),
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -31,13 +45,16 @@ export function AccountForm({
     }
     setValidation("");
     const { name, kind, currency, openingBalanceDate } = result.data;
-    save.mutate({
-      name,
-      kind,
-      currency,
-      openingBalanceDate,
-      openingBalance: String(values.openingBalance).trim(),
-    });
+    save.mutate(
+      {
+        name,
+        kind,
+        currency,
+        openingBalanceDate,
+        openingBalance: String(values.openingBalance).trim(),
+      },
+      { onSuccess: onSaved },
+    );
   }
 
   return (
@@ -57,23 +74,34 @@ export function AccountForm({
               name="name"
               type="text"
               required
-              maxLength={120}
+              maxLength={recordNameMaxLength}
               defaultValue={account?.name}
             />
           </label>
           <label>
             Account type
-            <select name="kind" defaultValue={account?.kind ?? "business"}>
-              <option value="business">Business</option>
-              <option value="personal">Personal</option>
-              <option value="deposit">Fixed deposit</option>
+            <select
+              name="kind"
+              defaultValue={account?.kind ?? defaultAccountKind}
+            >
+              {accountKinds.map((kind) => (
+                <option key={kind} value={kind}>
+                  {accountKindLabels[kind]}
+                </option>
+              ))}
             </select>
           </label>
           <label>
             Currency
-            <select name="currency" defaultValue={account?.currency ?? "MYR"}>
-              <option value="MYR">MYR</option>
-              <option value="USD">USD</option>
+            <select
+              name="currency"
+              defaultValue={account?.currency ?? defaultAccountCurrency}
+            >
+              {accountCurrencies.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currency}
+                </option>
+              ))}
             </select>
           </label>
           <label>
@@ -83,7 +111,7 @@ export function AccountForm({
               type="text"
               inputMode="decimal"
               required
-              maxLength={32}
+              maxLength={openingBalanceMaxLength}
               defaultValue={
                 account
                   ? openingBalanceText(account.openingBalanceMinor)

@@ -5,13 +5,14 @@ import {
   patchAccountSchema,
 } from "../src/accounts";
 import type { Account } from "../src/accounts";
+import { archivedFilter, type RecordStatus } from "../src/record-status";
 
 const accountColumns = `id, name, currency, kind,
   opening_balance_minor AS openingBalanceMinor,
   opening_balance_date AS openingBalanceDate, archived_at AS archivedAt`;
 
-export async function listAccounts(db: D1Database, archived: boolean | null) {
-  const filter = archived === null ? null : Number(archived);
+export async function listAccounts(db: D1Database, status: RecordStatus) {
+  const filter = archivedFilter(status);
   const { results } = await db
     .prepare(
       `SELECT ${accountColumns} FROM accounts

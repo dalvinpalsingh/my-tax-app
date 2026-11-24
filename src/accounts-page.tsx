@@ -1,29 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Archive,
-  ArchiveRestore,
-  Landmark,
-  Pencil,
-  Plus,
-  RefreshCw,
-} from "lucide-react";
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router";
-import { fetchAccounts, updateAccount } from "./account-api";
-import type { AccountStatus } from "./account-api";
+import { Landmark, Plus } from "lucide-react";
+import { useLayoutEffect, useState } from "react";
+import { Navigate } from "react-router";
+import { accountsQueryKey, fetchAccounts, updateAccount } from "./account-api";
 import { AccountForm } from "./account-form";
-import { openingBalanceText, type Account } from "./accounts";
+import {
+  accountKindLabels,
+  openingBalanceText,
+  type Account,
+} from "./accounts";
+import { dateFormat, displayLocale } from "./display";
+import { ArchiveConfirmation, RecordAction } from "./record-action";
+import { RecordLoadingStatus, RecordRefreshButton } from "./record-results";
+import {
+  RecordStatusNav,
+  statusLabels,
+  useRecordStatus,
+} from "./record-status-nav";
+import type { RecordStatus } from "./record-status";
 
-const accountKinds = {
-  business: "Business",
-  personal: "Personal",
-  deposit: "Fixed deposit",
-};
-const numberFormat = new Intl.NumberFormat("en-MY");
-const dateFormat = new Intl.DateTimeFormat("en-MY", {
-  dateStyle: "medium",
-  timeZone: "Asia/Kuala_Lumpur",
-});
+const numberFormat = new Intl.NumberFormat(displayLocale);
 
 function formatOpeningBalance(account: Account) {
   const [units, cents] = openingBalanceText(account.openingBalanceMinor).split(
@@ -35,92 +31,62 @@ function formatOpeningBalance(account: Account) {
 }
 
 export function Accounts() {
-  const [params] = useSearchParams();
-  const value = params.get("status");
-  const status = value === "active" || value === "archived" ? value : "all";
-  return <AccountsView key={status} status={status} />;
+  const { data: status } = useRecordStatus();
+  if (!status) return <Navigate to="/accounts" replace />;
+  return <AccountsView status={status} />;
 }
 
-const views = {
-  all: { label: "All", href: "/accounts", empty: "No accounts yet." },
-  active: {
-    label: "Active",
-    href: "/accounts?status=active",
-    empty: "No active accounts.",
-  },
-  archived: {
-    label: "Archived",
-    href: "/accounts?status=archived",
-    empty: "No archived accounts.",
-  },
-} satisfies Record<
-  AccountStatus,
-  { label: string; href: string; empty: string }
->;
+const emptyMessage = {
+  all: "No accounts yet.",
+  active: "No active accounts.",
+  archived: "No archived accounts.",
+} satisfies Record<RecordStatus, string>;
 
-const actionIcons = { Edit: Pencil, Archive, Restore: ArchiveRestore };
-
-function AccountAction({
-  action,
-  name,
-  disabled,
-  onClick,
-}: {
-  action: keyof typeof actionIcons;
-  name: string;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  const Icon = actionIcons[action];
-  return (
-    <button
-      type="button"
-      className="account-action"
-      data-action={action.toLowerCase()}
-      aria-label={`${action} ${name}`}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <Icon aria-hidden="true" size={18} />
-      <span className="account-action-tooltip" aria-hidden="true">
-        {action}
-      </span>
-    </button>
-  );
-}
-
-function AccountsView({ status }: { status: AccountStatus }) {
+function AccountsView({ status }: { status: RecordStatus }) {
   const client = useQueryClient();
   const [editor, setEditor] = useState<Account | "new" | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
   const query = useQuery({
-    queryKey: ["accounts", status],
+    queryKey: [...accountsQueryKey, status],
     queryFn: ({ signal }) => fetchAccounts(status, signal),
   });
-  const changeStatus = useMutation({
+  const { mutate, reset, isPending, error } = useMutation({
     mutationFn: ({ id, archive }: { id: string; archive: boolean }) =>
       updateAccount(id, { archived: archive }),
-    onSuccess: (account) => {
-      setConfirming(null);
-      setSaved(
-        `${account.name} ${account.archivedAt ? "archived" : "restored"}.`,
-      );
-      return client.invalidateQueries({ queryKey: ["accounts"] });
-    },
+    onSuccess: () => client.invalidateQueries({ queryKey: accountsQueryKey }),
   });
+
+  useLayoutEffect(() => {
+    setEditor(null);
+    setConfirming(null);
+    setSaved("");
+    reset();
+  }, [status, reset]);
 
   function openEditor(account: Account | "new") {
     setConfirming(null);
     setSaved("");
-    changeStatus.reset();
+    reset();
     setEditor(account);
   }
 
   function setArchived(id: string, archive: boolean) {
     setSaved("");
-    changeStatus.mutate({ id, archive });
+    mutate(
+      { id, archive },
+      {
+        onSuccess: (account) => {
+          setConfirming(null);
+          setSaved(
+            `${account.name} ${account.archivedAt ? "archived" : "restored"}.`,
+          );
+        },
+      },
+    );
   }
+
+  const actionsDisabled = !!editor || !!confirming || isPending;
 
   return (
     <main>
@@ -130,151 +96,130 @@ function AccountsView({ status }: { status: AccountStatus }) {
           <p>Opening balances by account and currency.</p>
         </div>
         <div className="page-actions">
+          <RecordRefreshButton
+            onRefresh={() => void query.refetch({ cancelRefetch: false })}
+          />
           <button
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
+            className="primary-button"
+            data-reserve-space={status === "archived" || !!editor}
+            disabled={isPending}
+            onClick={() => openEditor("new")}
           >
-            <RefreshCw aria-hidden="true" size={16} />
-            {query.isFetching ? "Refreshing…" : "Refresh"}
+            <Plus aria-hidden="true" size={16} /> Add account
           </button>
-          {status !== "archived" && !editor && (
-            <button
-              className="primary-button"
-              disabled={changeStatus.isPending}
-              onClick={() => openEditor("new")}
-            >
-              <Plus aria-hidden="true" size={16} /> Add account
-            </button>
-          )}
         </div>
       </div>
-      <nav className="account-views" aria-label="Account status">
-        {Object.values(views).map((view) => (
-          <Link
-            key={view.href}
-            to={view.href}
-            aria-current={views[status] === view ? "page" : undefined}
-          >
-            {view.label}
-          </Link>
-        ))}
-      </nav>
-      {editor && (
-        <AccountForm
-          key={editor === "new" ? "new" : editor.id}
-          account={editor === "new" ? undefined : editor}
-          onCancel={() => setEditor(null)}
-          onSaved={(account) => {
-            setSaved(
-              `${account.name} ${editor === "new" ? "added" : "updated"}.`,
-            );
-            setEditor(null);
-            void client.invalidateQueries({ queryKey: ["accounts"] });
-          }}
+      <RecordStatusNav
+        path="/accounts"
+        status={status}
+        label="Account status"
+      />
+      <section aria-label="Account results">
+        <RecordLoadingStatus
+          records="accounts"
+          isFetching={query.isFetching}
+          isPending={query.isPending}
         />
-      )}
-      {saved && (
-        <p className="save-status" role="status">
-          {saved}
-        </p>
-      )}
-      {query.isPending && <p role="status">Loading accounts…</p>}
-      {query.isError && <p role="alert">{query.error.message}</p>}
-      {changeStatus.isError && <p role="alert">{changeStatus.error.message}</p>}
-      {query.data?.length === 0 && <p>{views[status].empty}</p>}
-      {!!query.data?.length && (
-        <ul
-          className="accounts account-grid"
-          aria-label={`${views[status].label} accounts`}
-        >
-          {query.data.map((account) => (
-            <li key={account.id}>
-              <div className="account-heading">
-                <div className="account-icon">
-                  <Landmark aria-hidden="true" size={20} />
+        {editor && (
+          <AccountForm
+            key={editor === "new" ? "new" : editor.id}
+            account={editor === "new" ? undefined : editor}
+            onCancel={() => setEditor(null)}
+            onSaved={(account) => {
+              setSaved(
+                `${account.name} ${editor === "new" ? "added" : "updated"}.`,
+              );
+              setEditor(null);
+            }}
+          />
+        )}
+        {saved && (
+          <p className="save-status" role="status">
+            {saved}
+          </p>
+        )}
+        {query.isError && <p role="alert">{query.error.message}</p>}
+        {error && <p role="alert">{error.message}</p>}
+        {query.data?.length === 0 && <p>{emptyMessage[status]}</p>}
+        {!!query.data?.length && (
+          <ul
+            className="record-grid"
+            aria-label={`${statusLabels[status]} accounts`}
+          >
+            {query.data.map((account) => (
+              <li key={account.id}>
+                <div className="account-heading">
+                  <div className="account-icon">
+                    <Landmark aria-hidden="true" size={20} />
+                  </div>
+                  <div className="account-card-labels">
+                    <span>{accountKindLabels[account.kind]}</span>
+                    <span
+                      className="account-archived-label"
+                      data-reserve-space={
+                        status !== "all" || !account.archivedAt
+                      }
+                    >
+                      {statusLabels.archived}
+                    </span>
+                  </div>
                 </div>
-                <div className="account-card-labels">
-                  <span>{accountKinds[account.kind]}</span>
-                  {status === "all" && account.archivedAt && (
-                    <span className="account-archived-label">Archived</span>
+                <h2>{account.name}</h2>
+                <p className="balance">{formatOpeningBalance(account)}</p>
+                <p className="date">
+                  As of{" "}
+                  <time dateTime={account.openingBalanceDate}>
+                    {dateFormat.format(new Date(account.openingBalanceDate))}
+                  </time>
+                </p>
+                <div className="account-card-actions">
+                  {confirming === account.id ? (
+                    <ArchiveConfirmation
+                      name={account.name}
+                      record="account"
+                      pending={isPending}
+                      onConfirm={() => setArchived(account.id, true)}
+                      onCancel={() => {
+                        setConfirming(null);
+                        reset();
+                      }}
+                    />
+                  ) : (
+                    <div className="page-actions">
+                      {account.archivedAt ? (
+                        <RecordAction
+                          action="Restore"
+                          name={account.name}
+                          disabled={actionsDisabled}
+                          onClick={() => setArchived(account.id, false)}
+                        />
+                      ) : (
+                        <>
+                          <RecordAction
+                            action="Edit"
+                            name={account.name}
+                            disabled={actionsDisabled}
+                            onClick={() => openEditor(account)}
+                          />
+                          <RecordAction
+                            action="Archive"
+                            name={account.name}
+                            disabled={actionsDisabled}
+                            onClick={() => {
+                              setSaved("");
+                              setConfirming(account.id);
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-              </div>
-              <h2>{account.name}</h2>
-              <p className="balance">{formatOpeningBalance(account)}</p>
-              <p className="date">
-                As of{" "}
-                <time dateTime={account.openingBalanceDate}>
-                  {dateFormat.format(new Date(account.openingBalanceDate))}
-                </time>
-              </p>
-              <div className="account-card-actions">
-                {confirming === account.id ? (
-                  <div role="group" aria-label={`Archive ${account.name}?`}>
-                    <p>
-                      Archive this account? You can restore it from the Archived
-                      view.
-                    </p>
-                    <div className="page-actions">
-                      <button
-                        className="primary-button"
-                        disabled={changeStatus.isPending}
-                        onClick={() => setArchived(account.id, true)}
-                      >
-                        Confirm archive
-                      </button>
-                      <button
-                        disabled={changeStatus.isPending}
-                        onClick={() => {
-                          setConfirming(null);
-                          changeStatus.reset();
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="page-actions">
-                    {account.archivedAt ? (
-                      <AccountAction
-                        action="Restore"
-                        name={account.name}
-                        disabled={
-                          !!editor || !!confirming || changeStatus.isPending
-                        }
-                        onClick={() => setArchived(account.id, false)}
-                      />
-                    ) : (
-                      <>
-                        <AccountAction
-                          action="Edit"
-                          name={account.name}
-                          disabled={
-                            !!editor || !!confirming || changeStatus.isPending
-                          }
-                          onClick={() => openEditor(account)}
-                        />
-                        <AccountAction
-                          action="Archive"
-                          name={account.name}
-                          disabled={
-                            !!editor || !!confirming || changeStatus.isPending
-                          }
-                          onClick={() => {
-                            setSaved("");
-                            setConfirming(account.id);
-                          }}
-                        />
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

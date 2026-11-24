@@ -10,6 +10,12 @@
 
 Use synthetic regression cases for December invoice/January receipt, delayed USD conversion, FD maturity, own-account transfer, owner drawing, subcontractor costs, entertainment, allocation versus paid donations, repeated imports and filed-versus-estimated amounts. Validate the expected accounting and tax results before treating those cases as rule tests. Capture supporting evidence in the review for each milestone.
 
+### Monthly account balances in M1
+
+After manual transactions and transfers are available, show each account's calculated monthly opening balance, net movement and closing balance in its own currency. Derive them from the dated starting balance and recorded movements. Carry the closing balance into the next month, including months without activity. Mark periods before recorded history as unavailable and indicate partial history where applicable. Define the opening-date cutoff when designing the ledger, before implementing the calculation.
+
+Build this view before statement reconciliation. During reconciliation, compare calculated balances with the balances reported by the bank and show differences for review.
+
 ## Branch protection follow-ups
 
 - [ ] When GitHub Actions reliably reports build, type, lint and test results, require those checks on PRs into `main`.

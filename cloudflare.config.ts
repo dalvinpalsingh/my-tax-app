@@ -1,4 +1,9 @@
 import { bindings, defineConfig } from "cf/config";
+import {
+  localAccessAudience,
+  localAccessEmail,
+  localDatabaseId,
+} from "./scripts/local-simulator.ts";
 
 export default defineConfig(({ mode }) => {
   const local = mode === "development";
@@ -21,22 +26,26 @@ export default defineConfig(({ mode }) => {
       },
       access: {
         dev: {
-          aud: "local-accounts",
-          identity: { email: "owner@example.invalid" },
+          aud: localAccessAudience,
+          identity: { email: localAccessEmail },
         },
       },
       env: {
         DB: bindings.d1(
           local
             ? {
-                id: "00000000-0000-4000-8000-000000000001",
+                id: localDatabaseId,
                 name: "my-tax-app-local",
               }
             : { name: `my-tax-app-${environment}` },
         ),
         ACCESS_ISSUER: local ? bindings.text("") : bindings.secret(),
-        ACCESS_AUDIENCE: local ? bindings.text("") : bindings.secret(),
-        ACCESS_EMAIL: local ? bindings.text("") : bindings.secret(),
+        ACCESS_AUDIENCE: local
+          ? bindings.text(localAccessAudience)
+          : bindings.secret(),
+        ACCESS_EMAIL: local
+          ? bindings.text(localAccessEmail)
+          : bindings.secret(),
       },
     },
   };

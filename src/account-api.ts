@@ -1,15 +1,12 @@
 import { accountSchema, accountsResponse } from "./accounts";
 import type { CreateAccountInput, PatchAccountInput } from "./accounts";
+import type { RecordStatus } from "./record-status";
 
 const accountsUrl = "/api/accounts";
+export const accountsQueryKey = ["accounts"];
 const signIn = "Sign in with your approved account to continue.";
 
-export type AccountStatus = "all" | "active" | "archived";
-
-export async function fetchAccounts(
-  status: AccountStatus,
-  signal: AbortSignal,
-) {
+export async function fetchAccounts(status: RecordStatus, signal: AbortSignal) {
   const response = await fetch(`${accountsUrl}?status=${status}`, {
     signal,
     cache: "no-store",

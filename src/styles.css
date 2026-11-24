@@ -4,6 +4,7 @@
   font-family: "Segoe UI", system-ui, sans-serif;
   color: #18332a;
   background: #f7f7f2;
+  scrollbar-gutter: stable;
 }
 .app-shell {
   display: grid;
@@ -136,17 +137,28 @@ a:focus-visible {
   outline: 3px solid #58a88e;
   outline-offset: 3px;
 }
-.accounts {
+.record-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr));
   gap: 16px;
 }
-.accounts li {
+.record-grid > li {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 5;
+  row-gap: 0;
+  align-items: start;
   min-width: 0;
   padding: 22px;
   border: 1px solid #dce3db;
   border-radius: 14px;
   background: #fff;
+}
+.record-grid > li > :is(h2, .balance, .business-card-reference) {
+  min-block-size: 2lh;
+}
+[data-reserve-space="true"] {
+  visibility: hidden;
 }
 .account-heading {
   display: flex;
@@ -245,7 +257,12 @@ h2 {
 .account-views {
   display: flex;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
+}
+.record-loading {
+  min-block-size: 20px;
+  color: #54665c;
+  font-size: 13px;
 }
 .account-views a {
   padding: 8px 13px;
@@ -260,13 +277,6 @@ h2 {
 }
 .account-card-actions {
   margin-top: 16px;
-}
-.account-grid > li {
-  display: grid;
-  grid-template-rows: subgrid;
-  grid-row: span 5;
-  row-gap: 0;
-  align-items: start;
 }
 .account-card-labels {
   display: grid;

@@ -1,13 +1,37 @@
 import { z } from "zod";
+import { archiveChangeSchema, archivedAtSchema } from "./record-status";
+import {
+  openingBalanceMaxLength,
+  recordNameMaxLength,
+} from "./validation-limits";
+
+export const accountCurrencies = ["MYR", "USD"] as const;
+export const accountKinds = ["business", "personal", "deposit"] as const;
+export const accountKindLabels = {
+  business: "Business",
+  personal: "Personal",
+  deposit: "Fixed deposit",
+} satisfies Record<(typeof accountKinds)[number], string>;
+export const defaultAccountCurrency =
+  "MYR" satisfies (typeof accountCurrencies)[number];
+export const defaultAccountKind =
+  "business" satisfies (typeof accountKinds)[number];
+
+// Every currently supported currency uses two decimal places.
+const minorUnitDigits = 2;
+const minorUnitsPerMajor = 10n ** BigInt(minorUnitDigits);
+const openingBalancePattern = new RegExp(
+  `^-?[0-9]+(?:\\.[0-9]{1,${minorUnitDigits}})?$`,
+);
 
 export const accountSchema = z.object({
   id: z.string(),
   name: z.string(),
-  currency: z.enum(["MYR", "USD"]),
-  kind: z.enum(["business", "personal", "deposit"]),
+  currency: z.enum(accountCurrencies),
+  kind: z.enum(accountKinds),
   openingBalanceMinor: z.number().int(),
   openingBalanceDate: z.iso.date(),
-  archivedAt: z.iso.datetime().nullable(),
+  archivedAt: archivedAtSchema,
 });
 
 export const accountsResponse = z.object({ accounts: z.array(accountSchema) });
@@ -16,13 +40,17 @@ export type Account = z.infer<typeof accountSchema>;
 const accountFields = accountSchema
   .omit({ id: true, openingBalanceMinor: true, archivedAt: true })
   .extend({
-    name: z.string().trim().min(1, "Enter an account name.").max(120),
+    name: z
+      .string()
+      .trim()
+      .min(1, "Enter an account name.")
+      .max(recordNameMaxLength),
     openingBalance: z
       .string()
       .trim()
-      .max(32)
+      .max(openingBalanceMaxLength)
       .regex(
-        /^-?[0-9]+(?:\.[0-9]{1,2})?$/,
+        openingBalancePattern,
         "Enter a balance with up to two decimal places.",
       )
       .transform((amount, ctx) => {
@@ -30,7 +58,9 @@ const accountFields = accountSchema
         const [units, cents = ""] = (negative ? amount.slice(1) : amount).split(
           ".",
         );
-        const minor = BigInt(units) * 100n + BigInt(cents.padEnd(2, "0"));
+        const minor =
+          BigInt(units) * minorUnitsPerMajor +
+          BigInt(cents.padEnd(minorUnitDigits, "0"));
         if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
           ctx.addIssue({
             code: "custom",
@@ -51,7 +81,7 @@ export const createAccountSchema = accountFields.transform(
 );
 
 export const patchAccountSchema = z.union([
-  z.strictObject({ archived: z.boolean() }),
+  archiveChangeSchema,
   accountFields
     .partial()
     .refine((fields) => Object.keys(fields).length > 0)
@@ -67,6 +97,9 @@ export type PatchAccountInput = z.input<typeof patchAccountSchema>;
 export function openingBalanceText(minorUnits: number) {
   const amount = BigInt(minorUnits);
   const absolute = amount < 0n ? -amount : amount;
-  const cents = String(absolute % 100n).padStart(2, "0");
-  return `${amount < 0n ? "-" : ""}${absolute / 100n}.${cents}`;
+  const cents = String(absolute % minorUnitsPerMajor).padStart(
+    minorUnitDigits,
+    "0",
+  );
+  return `${amount < 0n ? "-" : ""}${absolute / minorUnitsPerMajor}.${cents}`;
 }
