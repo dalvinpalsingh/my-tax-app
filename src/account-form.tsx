@@ -11,6 +11,7 @@ import {
 } from "./accounts";
 import type { Account, CreateAccountInput } from "./accounts";
 import { accountsQueryKey, createAccount, updateAccount } from "./account-api";
+import { transactionsQueryKey } from "./transaction-api";
 import {
   openingBalanceMaxLength,
   recordNameMaxLength,
@@ -30,8 +31,12 @@ export function AccountForm({
   const save = useMutation({
     mutationFn: (input: CreateAccountInput) =>
       account ? updateAccount(account.id, input) : createAccount(input),
-    onSuccess: () =>
-      void client.invalidateQueries({ queryKey: accountsQueryKey }),
+    onSuccess: (saved) => {
+      void client.invalidateQueries({ queryKey: accountsQueryKey });
+      if (account && account.name !== saved.name) {
+        void client.invalidateQueries({ queryKey: transactionsQueryKey });
+      }
+    },
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {

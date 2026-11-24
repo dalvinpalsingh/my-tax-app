@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   ArrowRight,
+  ArrowDownUp,
   Building2,
   House,
   Landmark,
@@ -19,6 +20,7 @@ import {
 import { Accounts } from "./accounts-page";
 import { Activities } from "./activities-page";
 import { Businesses } from "./businesses-page";
+import { Transactions } from "./transactions-page";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -26,6 +28,12 @@ const queryClient = new QueryClient({
 });
 
 const sections = [
+  {
+    to: "/transactions",
+    label: "Transactions",
+    icon: ArrowDownUp,
+    description: "Record income and expenses by account.",
+  },
   {
     to: "/accounts",
     label: "Accounts",
@@ -98,6 +106,7 @@ function App() {
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/businesses" element={<Businesses />} />
         <Route path="/activities" element={<Activities />} />
+        <Route path="/transactions" element={<Transactions />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

@@ -24,13 +24,15 @@ Update this checklist after each task and summarize the current status in the ha
 - [x] Share the 192 px icon between the browser tab and app manifest with a one-year browser cache. Change the shared URL when replacing the image so browsers fetch the new version.
 - [x] Add the Activities page with optional Business links and create, edit, archive and restore actions. Verified the local D1 migration, API behavior and the Chrome workflow with synthetic data.
 
+- [x] Add manual income and expense entry with optional activity assignment, revision history and void and restore. Verified local D1 migration, focused API tests and the Chrome workflow with a synthetic transaction.
+
 ## Ongoing
 
 No tasks in progress.
 
 ## Pending
 
-- [ ] Manual income and expense entry with activity assignment by stable activity ID, followed by splits, transfers and drawings.
+- [ ] Transaction splits, transfers and drawings.
 - [ ] Add dated Business links before transaction reporting depends on activity-to-business history.
 - [ ] Calculate monthly account opening balances, net movements and closing balances after manual transactions and transfers and before statement reconciliation.
 - [ ] CSV/XLSX imports and reconciliation.

@@ -16,20 +16,22 @@ export function RecordStatusNav({
   path,
   status,
   label,
+  options = recordStatusSchema.options,
 }: {
   path: string;
-  status: RecordStatus;
+  status: RecordStatus | "voided";
   label: string;
+  options?: readonly (RecordStatus | "voided")[];
 }) {
   return (
     <nav className="account-views" aria-label={label}>
-      {recordStatusSchema.options.map((value) => (
+      {options.map((value) => (
         <Link
           key={value}
           to={value === "all" ? path : `${path}?status=${value}`}
           aria-current={status === value ? "page" : undefined}
         >
-          {statusLabels[value]}
+          {value === "voided" ? "Voided" : statusLabels[value]}
         </Link>
       ))}
     </nav>

@@ -24,6 +24,32 @@ const openingBalancePattern = new RegExp(
   `^-?[0-9]+(?:\\.[0-9]{1,${minorUnitDigits}})?$`,
 );
 
+export const amountTextSchema = z
+  .string()
+  .trim()
+  .max(openingBalanceMaxLength)
+  .regex(
+    openingBalancePattern,
+    "Enter a balance with up to two decimal places.",
+  )
+  .transform((amount, ctx) => {
+    const negative = amount.startsWith("-");
+    const [units, cents = ""] = (negative ? amount.slice(1) : amount).split(
+      ".",
+    );
+    const minor =
+      BigInt(units) * minorUnitsPerMajor +
+      BigInt(cents.padEnd(minorUnitDigits, "0"));
+    if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter a smaller amount.",
+      });
+      return z.NEVER;
+    }
+    return Number(negative ? -minor : minor);
+  });
+
 export const accountSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -45,31 +71,7 @@ const accountFields = accountSchema
       .trim()
       .min(1, "Enter an account name.")
       .max(recordNameMaxLength),
-    openingBalance: z
-      .string()
-      .trim()
-      .max(openingBalanceMaxLength)
-      .regex(
-        openingBalancePattern,
-        "Enter a balance with up to two decimal places.",
-      )
-      .transform((amount, ctx) => {
-        const negative = amount.startsWith("-");
-        const [units, cents = ""] = (negative ? amount.slice(1) : amount).split(
-          ".",
-        );
-        const minor =
-          BigInt(units) * minorUnitsPerMajor +
-          BigInt(cents.padEnd(minorUnitDigits, "0"));
-        if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Enter a smaller opening balance.",
-          });
-          return z.NEVER;
-        }
-        return Number(negative ? -minor : minor);
-      }),
+    openingBalance: amountTextSchema,
   })
   .strict();
 

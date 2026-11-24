@@ -2,7 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Landmark, Plus } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 import { Navigate } from "react-router";
-import { accountsQueryKey, fetchAccounts, updateAccount } from "./account-api";
+import {
+  accountsQueryKey,
+  accountsQueryOptions,
+  updateAccount,
+} from "./account-api";
 import { AccountForm } from "./account-form";
 import {
   accountKindLabels,
@@ -12,7 +16,7 @@ import {
 import { dateFormat, displayLocale } from "./display";
 import { PageHeader } from "./page-header";
 import { ArchiveConfirmation, RecordAction } from "./record-action";
-import { filterRecordsByStatus, recordListCacheOptions } from "./record-list";
+import { filterRecordsByStatus } from "./record-list";
 import { RecordLoadingStatus, RecordRefreshButton } from "./record-results";
 import {
   RecordStatusNav,
@@ -49,11 +53,7 @@ function AccountsView({ status }: { status: RecordStatus }) {
   const [editor, setEditor] = useState<Account | "new" | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [saved, setSaved] = useState("");
-  const query = useQuery({
-    queryKey: accountsQueryKey,
-    queryFn: ({ signal }) => fetchAccounts(signal),
-    ...recordListCacheOptions,
-  });
+  const query = useQuery(accountsQueryOptions);
   const visibleAccounts = filterRecordsByStatus(query.data, status);
   const { mutate, reset, isPending, error } = useMutation({
     mutationFn: ({ id, archive }: { id: string; archive: boolean }) =>

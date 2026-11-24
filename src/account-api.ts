@@ -1,5 +1,6 @@
 import { accountSchema, accountsResponse } from "./accounts";
 import type { CreateAccountInput, PatchAccountInput } from "./accounts";
+import { recordListCacheOptions } from "./record-list";
 
 const accountsUrl = "/api/accounts";
 export const accountsQueryKey = ["accounts"];
@@ -14,6 +15,12 @@ export async function fetchAccounts(signal: AbortSignal) {
   if (!response.ok) throw new Error("Accounts are temporarily unavailable.");
   return accountsResponse.parse(await response.json()).accounts;
 }
+
+export const accountsQueryOptions = {
+  ...recordListCacheOptions,
+  queryKey: accountsQueryKey,
+  queryFn: ({ signal }: { signal: AbortSignal }) => fetchAccounts(signal),
+};
 
 async function writeAccount(
   url: string,
@@ -30,8 +37,17 @@ async function writeAccount(
     throw new Error("Check the account details and try again.");
   if (response.status === 404)
     throw new Error("Account not found. Refresh the account list.");
-  if (response.status === 409)
-    throw new Error("Restore this account before editing it.");
+  if (response.status === 409) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      body &&
+        typeof body === "object" &&
+        "error" in body &&
+        typeof body.error === "string"
+        ? body.error
+        : "Could not update this account.",
+    );
+  }
   if (!response.ok)
     throw new Error(
       "Could not save the account. Check the list before trying again.",

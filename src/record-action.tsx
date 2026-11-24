@@ -1,6 +1,11 @@
-import { Archive, ArchiveRestore, Pencil } from "lucide-react";
+import { Archive, ArchiveRestore, CircleSlash, Pencil } from "lucide-react";
 
-const actionIcons = { Edit: Pencil, Archive, Restore: ArchiveRestore };
+const actionIcons = {
+  Edit: Pencil,
+  Archive,
+  Restore: ArchiveRestore,
+  Void: CircleSlash,
+};
 
 export function RecordAction({
   action,

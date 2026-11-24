@@ -1,7 +1,13 @@
 import { createAccount, listAccounts, updateAccount } from "./accounts";
 import { createActivity, listActivities, updateActivity } from "./activities";
 import { createBusiness, listBusinesses, updateBusiness } from "./businesses";
+import {
+  createTransaction,
+  listTransactions,
+  updateTransaction,
+} from "./transactions";
 import { recordStatusSchema } from "../src/record-status";
+import { transactionStatusSchema } from "../src/transactions";
 import { maxRecordBodyBytes } from "../src/validation-limits";
 
 export async function handleApi(
@@ -20,13 +26,14 @@ export async function handleApi(
   if (!authorized) return json({ error: "Access required" }, 403);
   const url = new URL(request.url);
   const route =
-    /^\/api\/(accounts|activities|businesses)(?:\/([a-zA-Z0-9_-]+))?$/.exec(
+    /^\/api\/(accounts|activities|businesses|transactions)(?:\/([a-zA-Z0-9_-]+))?$/.exec(
       url.pathname,
     );
   if (!route) return json({ error: "Not found" }, 404);
   const [, resource, id] = route;
   const isBusiness = resource === "businesses";
   const isActivity = resource === "activities";
+  const isTransaction = resource === "transactions";
   const method = request.method;
   const allowed = id ? ["PATCH"] : ["GET", "POST"];
   if (!allowed.includes(method))
@@ -34,7 +41,13 @@ export async function handleApi(
       Allow: allowed.join(", "),
     });
 
-  const noun = isActivity ? "activity" : isBusiness ? "business" : "account";
+  const noun = isTransaction
+    ? "transaction"
+    : isActivity
+      ? "activity"
+      : isBusiness
+        ? "business"
+        : "account";
   if (method !== "GET") {
     const origin = request.headers.get("Origin");
     if (origin && origin !== url.origin)
@@ -75,6 +88,14 @@ export async function handleApi(
     }
 
     try {
+      if (isTransaction) {
+        const result = id
+          ? await updateTransaction(db, id, body)
+          : await createTransaction(db, body);
+        return "transaction" in result
+          ? json(result.transaction, result.status)
+          : json({ error: result.error }, result.status);
+      }
       if (isActivity) {
         const result = id
           ? await updateActivity(db, id, body)
@@ -95,13 +116,38 @@ export async function handleApi(
       const record = await create(db, body);
       if (!record) return json({ error: `Enter valid ${noun} details.` }, 400);
       return json(record, 201);
-    } catch {
+    } catch (error) {
+      if (
+        resource === "accounts" &&
+        id &&
+        error instanceof Error &&
+        error.message.includes("account_currency_in_use")
+      ) {
+        return json(
+          {
+            error:
+              "Currency cannot change after this account has transaction history.",
+          },
+          409,
+        );
+      }
       return json(
         {
           error: `Could not save the ${noun}. Check the list before trying again.`,
         },
         503,
       );
+    }
+  }
+  if (isTransaction) {
+    const status = transactionStatusSchema.safeParse(
+      url.searchParams.get("status") ?? "all",
+    );
+    if (!status.success) return json({ error: "Invalid status filter." }, 400);
+    try {
+      return json(await listTransactions(db, status.data));
+    } catch {
+      return json({ error: "Transactions are temporarily unavailable" }, 503);
     }
   }
   const status = recordStatusSchema.safeParse(

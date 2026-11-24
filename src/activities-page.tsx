@@ -25,6 +25,7 @@ import {
   useRecordStatus,
 } from "./record-status-nav";
 import { recordNameMaxLength } from "./validation-limits";
+import { transactionsQueryKey } from "./transaction-api";
 
 const path = "/activities";
 const emptyMessage = {
@@ -59,9 +60,12 @@ function ActivityForm({
   const save = useMutation({
     mutationFn: (input: CreateActivityInput) =>
       saveActivity(input, activity?.id),
-    onSuccess: () => {
+    onSuccess: (saved) => {
       void client.invalidateQueries({ queryKey: activitiesQueryKey });
       void refreshBusinessChoices(client);
+      if (activity && activity.name !== saved.name) {
+        void client.invalidateQueries({ queryKey: transactionsQueryKey });
+      }
     },
   });
 
