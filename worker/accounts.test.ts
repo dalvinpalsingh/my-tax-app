@@ -136,7 +136,9 @@ describe("Accounts API", () => {
     try {
       const env = {
         DB: {
-          prepare: () => ({ all: async () => ({ results: [] }) }),
+          prepare: () => ({
+            bind: () => ({ all: async () => ({ results: [] }) }),
+          }),
         } as unknown as D1Database,
         ACCESS_ISSUER: issuer,
         ACCESS_AUDIENCE: "accounts",

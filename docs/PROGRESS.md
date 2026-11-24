@@ -10,6 +10,7 @@ Update this checklist after each task and summarize the current status in the ha
 - [x] Create and view businesses with an optional registration reference.
 - [x] Allow a dedicated local D1 folder shared by the dev server, migration and seed commands.
 - [x] Add Home, responsive navigation and a single local test URL on port 5173.
+- [x] Edit, archive and restore accounts with compact actions, aligned cards and All, Active and Archived views.
 
 ## Ongoing
 
@@ -17,7 +18,6 @@ No implementation in progress.
 
 ## Pending
 
-- [ ] Account editing and archiving.
 - [ ] Business activities and transaction assignment.
 - [ ] Manual income and expense entry, splits, transfers and drawings.
 - [ ] CSV/XLSX imports and reconciliation.

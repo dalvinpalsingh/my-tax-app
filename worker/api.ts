@@ -1,5 +1,4 @@
-import { accountsResponse, createAccountSchema } from "../src/accounts";
-import type { Account } from "../src/accounts";
+import { createAccount, listAccounts, updateAccount } from "./accounts";
 import { createBusiness, listBusinesses } from "./businesses";
 
 export async function handleApi(
@@ -18,10 +17,20 @@ export async function handleApi(
   if (!authorized) return json({ error: "Access required" }, 403);
   const url = new URL(request.url);
   const isBusiness = url.pathname === "/api/businesses";
-  if (!isBusiness && url.pathname !== "/api/accounts")
+  const accountId = /^\/api\/accounts\/([a-zA-Z0-9_-]+)$/.exec(
+    url.pathname,
+  )?.[1];
+  if (!isBusiness && !accountId && url.pathname !== "/api/accounts")
     return json({ error: "Not found" }, 404);
+  const method = request.method;
+  const allowed = accountId ? ["PATCH"] : ["GET", "POST"];
+  if (!allowed.includes(method))
+    return json({ error: "Method not allowed" }, 405, {
+      Allow: allowed.join(", "),
+    });
+
   const noun = isBusiness ? "business" : "account";
-  if (request.method === "POST") {
+  if (method !== "GET") {
     const origin = request.headers.get("Origin");
     if (origin && origin !== url.origin)
       return json({ error: "Access required" }, 403);
@@ -63,6 +72,10 @@ export async function handleApi(
     }
 
     try {
+      if (accountId) {
+        const result = await updateAccount(db, accountId, body);
+        return json(result.account ?? { error: result.error }, result.status);
+      }
       const create = isBusiness ? createBusiness : createAccount;
       const record = await create(db, body);
       if (!record) return json({ error: `Enter valid ${noun} details.` }, 400);
@@ -76,21 +89,12 @@ export async function handleApi(
       );
     }
   }
-  if (request.method !== "GET") {
-    return json({ error: "Method not allowed" }, 405, { Allow: "GET, POST" });
-  }
-
   try {
     if (isBusiness) return json(await listBusinesses(db));
-    const { results } = await db
-      .prepare(
-        `SELECT id, name, currency, kind,
-          opening_balance_minor AS openingBalanceMinor,
-          opening_balance_date AS openingBalanceDate
-          FROM accounts ORDER BY name, id`,
-      )
-      .all<Account>();
-    return json(accountsResponse.parse({ accounts: results }));
+    const status = url.searchParams.get("status");
+    return json(
+      await listAccounts(db, status === "all" ? null : status === "archived"),
+    );
   } catch {
     return json(
       {
@@ -101,25 +105,4 @@ export async function handleApi(
       503,
     );
   }
-}
-
-async function createAccount(db: D1Database, body: unknown) {
-  const result = createAccountSchema.safeParse(body);
-  if (!result.success) return null;
-  const account: Account = { id: crypto.randomUUID(), ...result.data };
-  await db
-    .prepare(
-      `INSERT INTO accounts (id, name, currency, kind, opening_balance_minor, opening_balance_date)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      account.id,
-      account.name,
-      account.currency,
-      account.kind,
-      account.openingBalanceMinor,
-      account.openingBalanceDate,
-    )
-    .run();
-  return account;
 }

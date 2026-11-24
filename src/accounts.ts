@@ -7,13 +7,14 @@ export const accountSchema = z.object({
   kind: z.enum(["business", "personal", "deposit"]),
   openingBalanceMinor: z.number().int(),
   openingBalanceDate: z.iso.date(),
+  archivedAt: z.iso.datetime().nullable(),
 });
 
 export const accountsResponse = z.object({ accounts: z.array(accountSchema) });
 export type Account = z.infer<typeof accountSchema>;
 
-export const createAccountSchema = accountSchema
-  .omit({ id: true, openingBalanceMinor: true })
+const accountFields = accountSchema
+  .omit({ id: true, openingBalanceMinor: true, archivedAt: true })
   .extend({
     name: z.string().trim().min(1, "Enter an account name.").max(120),
     openingBalance: z
@@ -40,10 +41,32 @@ export const createAccountSchema = accountSchema
         return Number(negative ? -minor : minor);
       }),
   })
-  .strict()
-  .transform(({ openingBalance, ...details }) => ({
+  .strict();
+
+export const createAccountSchema = accountFields.transform(
+  ({ openingBalance, ...details }) => ({
     ...details,
     openingBalanceMinor: openingBalance,
-  }));
+  }),
+);
+
+export const patchAccountSchema = z.union([
+  z.strictObject({ archived: z.boolean() }),
+  accountFields
+    .partial()
+    .refine((fields) => Object.keys(fields).length > 0)
+    .transform(({ openingBalance, ...details }) => ({
+      ...details,
+      openingBalanceMinor: openingBalance,
+    })),
+]);
 
 export type CreateAccountInput = z.input<typeof createAccountSchema>;
+export type PatchAccountInput = z.input<typeof patchAccountSchema>;
+
+export function openingBalanceText(minorUnits: number) {
+  const amount = BigInt(minorUnits);
+  const absolute = amount < 0n ? -amount : amount;
+  const cents = String(absolute % 100n).padStart(2, "0");
+  return `${amount < 0n ? "-" : ""}${absolute / 100n}.${cents}`;
+}
