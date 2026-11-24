@@ -17,7 +17,9 @@ pnpm db:seed
 pnpm dev
 ```
 
-Open the local URL printed by the server. The local D1 fixture contains three synthetic accounts. The local Worker uses Cloudflare's simulated Access identity, and the hosted Worker verifies an Access application JWT. Reloading the fixture preserves existing rows with the same IDs.
+Run `pnpm dev` in the VS Code terminal and open [http://127.0.0.1:5173](http://127.0.0.1:5173). Stop the server with Ctrl+C in that terminal. If port 5173 is in use, stop the previous dev server and rerun the command. Vite uses port 5173 without picking a fallback.
+
+The local D1 fixture contains three synthetic accounts. The local Worker uses Cloudflare's simulated Access identity, and the hosted Worker verifies an Access application JWT. Reloading the fixture preserves existing rows with the same IDs.
 
 Run `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm format:check` before review. Build first to generate the Worker types. Use `pnpm exec cf build --mode test` to check the TEST build.
 

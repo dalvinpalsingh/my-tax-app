@@ -5,24 +5,15 @@
   color: #18332a;
   background: #f7f7f2;
 }
-header {
+.app-shell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-rows: auto 1fr;
+}
+.app-navigation {
   background: #153b33;
   color: #fff;
-}
-.bar,
-main {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding-inline: clamp(20px, 5vw, 64px);
-}
-.bar {
-  min-height: 72px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  padding-block: 12px;
+  padding: 16px 20px 12px;
 }
 .brand,
 button {
@@ -34,22 +25,80 @@ button {
   font-size: 19px;
   font-weight: 650;
 }
-nav {
+.app-navigation nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  margin-top: 12px;
 }
-nav a {
-  display: block;
-  padding: 8px 14px;
+.app-navigation nav a {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
   border-radius: 8px;
   color: #fff;
   font-size: 14px;
 }
-nav a[aria-current] {
+.app-navigation nav a:hover,
+.app-navigation nav a[aria-current] {
   background: #2b4f45;
 }
 main {
+  width: 100%;
+  min-width: 0;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-inline: clamp(20px, 5vw, 64px);
   padding-block: clamp(36px, 7vw, 80px);
+}
+@media (min-width: 768px) {
+  .app-shell {
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .app-navigation {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    min-height: 100dvh;
+    padding: 28px 20px;
+  }
+  .app-navigation nav {
+    flex-direction: column;
+    margin-top: 32px;
+  }
+  .app-navigation nav a {
+    padding-inline: 12px;
+  }
+}
+.home-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+}
+.home-links a {
+  display: block;
+  height: 100%;
+  padding: 22px;
+  border: 1px solid #dce3db;
+  border-radius: 14px;
+  background: #fff;
+}
+.home-links a:hover {
+  border-color: #789588;
+}
+.home-links h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.home-links p {
+  margin-top: 5px;
+  color: #54665c;
+  font-size: 14px;
 }
 .page-title {
   display: flex;

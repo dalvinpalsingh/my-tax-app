@@ -4,10 +4,25 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Landmark, Plus, RefreshCw, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  House,
+  Landmark,
+  Plus,
+  RefreshCw,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, NavLink, Route, Routes } from "react-router";
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  NavLink,
+  Route,
+  Routes,
+} from "react-router";
 import { accountsResponse } from "./accounts";
 import type { Account } from "./accounts";
 import { AccountForm } from "./account-form";
@@ -126,27 +141,75 @@ function Accounts() {
   );
 }
 
+const sections = [
+  {
+    to: "/accounts",
+    label: "Accounts",
+    icon: Landmark,
+    description: "Record and view opening balances in MYR and USD.",
+  },
+  {
+    to: "/businesses",
+    label: "Businesses",
+    icon: Building2,
+    description:
+      "Keep your business names, start dates and registration references together.",
+  },
+];
+
+function Home() {
+  return (
+    <main>
+      <div className="page-title">
+        <h1>Home</h1>
+      </div>
+      <ul className="home-links">
+        {sections.map(({ to, label, icon: Icon, description }) => (
+          <li key={to}>
+            <Link to={to}>
+              <span className="account-icon">
+                <Icon aria-hidden="true" size={20} />
+              </span>
+              <h2>
+                {label} <ArrowRight aria-hidden="true" size={16} />
+              </h2>
+              <p>{description}</p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
 function App() {
   return (
-    <>
-      <header>
-        <div className="bar">
-          <span className="brand">
-            <Wallet aria-hidden="true" size={22} />
-            My Tax App
-          </span>
-          <nav aria-label="Main navigation">
-            <NavLink to="/accounts">Accounts</NavLink>
-            <NavLink to="/businesses">Businesses</NavLink>
-          </nav>
-        </div>
+    <div className="app-shell">
+      <header className="app-navigation">
+        <Link className="brand" to="/">
+          <Wallet aria-hidden="true" size={22} />
+          My Tax App
+        </Link>
+        <nav aria-label="Main navigation">
+          <NavLink to="/" end>
+            <House aria-hidden="true" size={18} />
+            Home
+          </NavLink>
+          {sections.map(({ to, label, icon: Icon }) => (
+            <NavLink to={to} key={to}>
+              <Icon aria-hidden="true" size={18} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
       </header>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/businesses" element={<Businesses />} />
-        <Route path="*" element={<Navigate to="/accounts" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </div>
   );
 }
 
