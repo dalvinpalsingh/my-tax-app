@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { handleApi } from "./accounts";
+import { handleApi } from "./api";
 
 const keySets = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
 

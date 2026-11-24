@@ -9,5 +9,11 @@
     "skipLibCheck": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "worker", "*.ts", ".cloudflare/types/index.d.ts"]
+  "include": [
+    "src",
+    "worker",
+    "scripts",
+    "*.ts",
+    ".cloudflare/types/index.d.ts"
+  ]
 }

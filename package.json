@@ -13,8 +13,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "format:check": "prettier --check .",
-    "db:migrate": "cf d1 migrations apply 00000000-0000-4000-8000-000000000001 --local",
-    "db:seed": "cf d1 raw 00000000-0000-4000-8000-000000000001 --local --batch @fixtures/accounts.json"
+    "db:migrate": "node scripts/local-db.mjs migrate",
+    "db:seed": "node scripts/local-db.mjs seed"
   },
   "dependencies": {
     "@tanstack/react-query": "^5",

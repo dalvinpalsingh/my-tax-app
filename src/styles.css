@@ -20,7 +20,9 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-block: 12px;
 }
 .brand,
 button {
@@ -31,6 +33,10 @@ button {
 .brand {
   font-size: 19px;
   font-weight: 650;
+}
+nav {
+  display: flex;
+  gap: 4px;
 }
 nav a {
   display: block;

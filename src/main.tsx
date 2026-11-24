@@ -11,6 +11,7 @@ import { BrowserRouter, Navigate, NavLink, Route, Routes } from "react-router";
 import { accountsResponse } from "./accounts";
 import type { Account } from "./accounts";
 import { AccountForm } from "./account-form";
+import { Businesses } from "./businesses-page";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -136,11 +137,13 @@ function App() {
           </span>
           <nav aria-label="Main navigation">
             <NavLink to="/accounts">Accounts</NavLink>
+            <NavLink to="/businesses">Businesses</NavLink>
           </nav>
         </div>
       </header>
       <Routes>
         <Route path="/accounts" element={<Accounts />} />
+        <Route path="/businesses" element={<Businesses />} />
         <Route path="*" element={<Navigate to="/accounts" replace />} />
       </Routes>
     </>

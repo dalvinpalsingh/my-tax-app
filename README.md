@@ -4,7 +4,7 @@ A personal tax planning companion for Malaysian sole proprietors who file Borang
 
 ## Project status
 
-Accounts lets you record and view opening balances in MYR and USD. Planned workflows include tracking income and expenses, recording personal reliefs and historical returns, estimating tax and reserves, and testing what-if scenarios.
+Accounts lets you record and view opening balances in MYR and USD. Businesses lets you record and view your businesses. Planned workflows include tracking income and expenses, recording personal reliefs and historical returns, estimating tax and reserves, and testing what-if scenarios.
 
 ## Run locally
 
@@ -20,6 +20,8 @@ pnpm dev
 Open the local URL printed by the server. The local D1 fixture contains three synthetic accounts. The local Worker uses Cloudflare's simulated Access identity, and the hosted Worker verifies an Access application JWT. Reloading the fixture preserves existing rows with the same IDs.
 
 Run `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm format:check` before review. Build first to generate the Worker types. Use `pnpm exec cf build --mode test` to check the TEST build.
+
+To keep local D1 outside the checkout, set `MY_TAX_APP_LOCAL_STATE` in the ignored `.env.local` file. Use a quoted directory path if it contains spaces. The dev server, migrations and seed all write below that directory's `v3` subfolder. Without this setting they use `.cloudflare/state/v3`. Restart the dev server after changing paths.
 
 ### Hosted setup
 

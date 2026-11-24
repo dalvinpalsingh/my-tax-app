@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import worker from "./index";
-import { handleApi } from "./accounts";
+import { handleApi } from "./api";
 
 const url = "https://app.example.invalid/api/accounts";
 const sample = {

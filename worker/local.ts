@@ -1,4 +1,4 @@
-import { handleApi } from "./accounts";
+import { handleApi } from "./api";
 
 export default {
   async fetch(request, env, ctx) {
